@@ -553,7 +553,7 @@ Instruction: {instruction}{context_note}"""
             return
         try:
             from AppKit import NSWorkspace, NSWorkspaceDidWakeNotification
-            from PyObjCTools import AppHelper
+            from Foundation import NSRunLoop, NSDate
             import objc
 
             def on_wake(_notification):
@@ -565,11 +565,17 @@ Instruction: {instruction}{context_note}"""
                 NSWorkspaceDidWakeNotification, None, None, on_wake,
             )
 
-            # Run the notification center on a background thread
+            # Pump NSRunLoop on a background thread to receive notifications
             def run_loop():
-                AppHelper.runConsoleEventLoop()
+                loop = NSRunLoop.currentRunLoop()
+                while True:
+                    loop.runMode_beforeDate_(
+                        "NSDefaultRunLoopMode",
+                        NSDate.dateWithTimeIntervalSinceNow_(5.0),
+                    )
 
             threading.Thread(target=run_loop, daemon=True).start()
+            print("Wake listener active", flush=True)
         except Exception as e:
             print(f"Warning: could not set up wake listener: {e}", flush=True)
 

@@ -553,11 +553,11 @@ Instruction: {instruction}{context_note}"""
             return
         try:
             from AppKit import NSWorkspace, NSWorkspaceDidWakeNotification
-            from Foundation import NSRunLoop, NSDate
-            import objc
 
             def on_wake(_notification):
-                print("System wake detected, restarting...", flush=True)
+                print("System wake detected, waiting for Accessibility restore...", flush=True)
+                time.sleep(10)  # wait for macOS to restore Accessibility trust
+                print("Restarting...", flush=True)
                 os._exit(0)  # launchd KeepAlive will restart us
 
             center = NSWorkspace.sharedWorkspace().notificationCenter()
@@ -565,14 +565,10 @@ Instruction: {instruction}{context_note}"""
                 NSWorkspaceDidWakeNotification, None, None, on_wake,
             )
 
-            # Pump NSRunLoop on a background thread to receive notifications
+            # Pump CFRunLoop on a background thread to receive notifications
             def run_loop():
-                loop = NSRunLoop.currentRunLoop()
-                while True:
-                    loop.runMode_beforeDate_(
-                        "NSDefaultRunLoopMode",
-                        NSDate.dateWithTimeIntervalSinceNow_(5.0),
-                    )
+                from CoreFoundation import CFRunLoopRun
+                CFRunLoopRun()  # blocks, no CPU spin
 
             threading.Thread(target=run_loop, daemon=True).start()
             print("Wake listener active", flush=True)

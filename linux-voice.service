@@ -1,7 +1,8 @@
 [Unit]
 Description=Voice-to-text dictation tool
 Documentation=https://github.com/williamjameshandley/linux-voice
-After=graphical-session.target
+After=graphical-session.target pipewire-pulse.service
+Requires=pipewire-pulse.service
 PartOf=graphical-session.target
 
 [Service]

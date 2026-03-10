@@ -172,6 +172,18 @@ def check_environment(platform):
     # Platform-specific checks (xdotool on Linux, Accessibility on macOS, etc.)
     errors.extend(platform.check_environment())
 
+    # Check for a usable audio input device
+    try:
+        default_input = sd.default.device[0]
+        dev_info = sd.query_devices(default_input)
+        if dev_info["max_input_channels"] < 1:
+            errors.append(
+                f"Default input device '{dev_info['name']}' has no input channels. "
+                "Check PipeWire/PulseAudio is running."
+            )
+    except Exception as e:
+        errors.append(f"Cannot query audio input devices: {e}")
+
     if errors:
         for err in errors:
             print(f"\033[91mError: {err}\033[0m")
